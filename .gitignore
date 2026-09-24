@@ -1,0 +1,10 @@
+node_modules
+.vercel
+.grok
+dist
+artifacts
+.project_id
+*.log
+.DS_Store
+.env
+.env.*

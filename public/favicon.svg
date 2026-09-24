@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Ditches and Desert">
+  <rect width="32" height="32" rx="7" fill="#1c1914"/>
+  <path d="M4 15.2h24v3.4H4z" fill="#3f6b3a"/>
+  <path d="M4 16.6h24v1.5H4z" fill="#2f5f73"/>
+  <path d="M6.5 14.2 12.4 7.4 18.2 14.2z" fill="#e6d3b1"/>
+  <path d="M16.4 14.2 21.2 8.6 25.6 14.2z" fill="#f3ead7"/>
+  <rect x="14.2" y="11.4" width="3.2" height="13.2" rx="0.6" fill="#a15c38"/>
+  <rect x="12.4" y="11.4" width="6.8" height="2.2" rx="0.4" fill="#a15c38"/>
+</svg>

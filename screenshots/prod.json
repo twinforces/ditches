@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Ditches and Desert",
+      "hasCanvas": false,
+      "bodyTextLen": 636,
+      "bodyTextHash": "9dc5e3a6b87872bd82d2174c20cb84bc52a82cdd0bedcbd38f0506616f5f4a46",
+      "bodyTextPrefix": "Ditches and Desert A GrumpyTechBro joint Author's Note Receipts ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/prod.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Ditches and Desert",
+      "hasCanvas": false,
+      "bodyTextLen": 636,
+      "bodyTextHash": "9dc5e3a6b87872bd82d2174c20cb84bc52a82cdd0bedcbd38f0506616f5f4a46",
+      "bodyTextPrefix": "Ditches and Desert A GrumpyTechBro joint Author's Note Receipts ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/prod-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/prod.json",
+  "divergesFromBaseline": false,
+  "baselineReasons": []
+}
