@@ -4,18 +4,6 @@ export type Brief = { id: string; kicker: string; title: string; body: string };
 
 const SCRIPT: Brief[] = [
   {
-    id: "partition",
-    kicker: "November 1947",
-    title: "The UN draws a line. The Arab side rejects it.",
-    body: "The plan is two states and an international Jerusalem. The Jewish Agency accepts. The Arab Higher Committee and the Arab states reject the whole map. Swamp included. Empty desert included. A line on a map is not a ditch. Dirt nobody watered is not a farm yet.",
-  },
-  {
-    id: "concession",
-    kicker: "1934",
-    title: "You bought the swamp.",
-    body: "The Hula concession is already yours, bought from the holders of the 1914 grant. Britain approved it in 1934 and did not dig it. That was neglect, not a ban. The towns sit in a garden. Past that garden the country is dirt, and it stays dirt until water moves.",
-  },
-  {
     id: "independence",
     kicker: "15 May 1948",
     title: "The armies come in.",
@@ -60,8 +48,6 @@ const SCRIPT: Brief[] = [
 ];
 
 const YEAR: Record<string, number> = {
-  partition: 1947,
-  concession: 1947,
   independence: 1948,
   sinai: 1956,
   raids: 1965,

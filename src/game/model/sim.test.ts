@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { BOARD, neighbors } from "./board.ts";
-import { ackBrief, pendingBrief } from "./events.ts";
-import { buildFusion, canDrain, canFusion, canKibbutz, canPipe, campaignState, cityHold, cityPeople, claimOf, commitPolicy, desalFlow, drain, dropPolicyItem, foundKibbutz, initialState, irrigate, layPipe, passYear, policyLines, queueAction, undoPolicy, upgradeTown, wetInfo, YEAR_AP, yearAp } from "./sim.ts";
+import { pendingBrief } from "./events.ts";
+import { buildFusion, canDrain, canFusion, canKibbutz, canPipe, campaignState, cityHold, cityPeople, claimOf, commitPolicy, desalFlow, drain, dropPolicyItem, foundKibbutz, initialState, irrigate, layPipe, nextPaper, passYear, policyLines, queueAction, terrainOf, undoPolicy, upgradeTown, wetInfo, YEAR_AP, yearAp } from "./sim.ts";
 
 const kinneret = BOARD.find((c) => c.name === "Kinneret")!;
 const yarkon = BOARD.find((c) => c.source === "yarkon")!;
@@ -277,12 +277,15 @@ describe("model filters", () => {
   it("will not dig until the Mandate ends, and will not dig the reserved swamp", () => {
     const owned = BOARD.find((c) => c.terrain === "swamp" && c.claim === "yishuv")!;
     const reserved = BOARD.find((c) => c.terrain === "swamp" && c.claim === "arab")!;
-    const held = campaignState();
+    const early = campaignState();
+    assert.equal(early.year, 1914);
+    assert.match(canDrain(early, owned) ?? "", /Beirut/);
+    const held = { ...early, year: 1947 };
     assert.match(canDrain(held, owned) ?? "", /1934/);
     const free = passYear(held);
     assert.equal(free.year, 1948);
     assert.equal(canDrain(free, owned), null);
-    assert.match(canDrain(free, reserved) ?? "", /Reserved/);
+    assert.match(canDrain(held, reserved) ?? "", /Reserved/);
   });
 
   it("refuses a pipe across the highland", () => {
@@ -335,16 +338,21 @@ describe("model filters", () => {
     assert.match(watered.log.join(" "), /came for the new land/);
   });
 
-  it("tells 1934 before it lets you dig, and 1948 when you can", () => {
+  it("starts in 1914, adds the valley in 1921, and opens the shovel in 1948", () => {
+    const valley = BOARD.find((c) => c.r === 18 && c.c === 9 && c.terrain === "fertile")!;
     const s = campaignState();
-    assert.equal(pendingBrief(s)?.id, "partition");
-    const split = ackBrief(s, "partition");
-    assert.equal(pendingBrief(split)?.id, "concession");
-    const acked = ackBrief(split, "concession");
-    assert.equal(pendingBrief(acked), null);
-    const next = commitPolicy(acked);
-    assert.equal(next.year, 1948);
-    assert.equal(pendingBrief(next)?.id, "independence");
+    assert.equal(pendingBrief(s), null);
+    assert.equal(terrainOf(s, valley), "desert");
+    assert.equal(claimOf(s, valley), "open");
+    let y = s;
+    while (y.year < 1921) y = nextPaper(y);
+    assert.equal(terrainOf(y, valley), "fertile");
+    assert.equal(claimOf(y, valley), "yishuv");
+    assert.ok(y.bought.length > 0);
+    while (y.year < 1948) y = nextPaper(y);
+    assert.equal(y.year, 1948);
+    assert.equal(pendingBrief(y)?.id, "independence");
+    assert.equal(canDrain(y, BOARD.find((c) => c.terrain === "swamp" && c.claim === "yishuv")!), null);
   });
 
   it("opens the highland in 1967 without farming it, and does not stop the year", () => {

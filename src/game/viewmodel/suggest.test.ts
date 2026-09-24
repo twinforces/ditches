@@ -11,16 +11,18 @@ function quiet(s: State): State {
 }
 
 describe("next move", () => {
-  it("tells 1947 to read the card, then to commit", () => {
-    const card = suggestNext(campaignState());
-    assert.equal(card.kind, "wait");
-    assert.match(card.text, /card/);
-    const hint = suggestNext(quiet(campaignState()));
+  it("opens on next year, and 1947 is independence", () => {
+    const hint = suggestNext(campaignState());
     assert.equal(hint.kind, "commit");
     assert.equal(hint.id, null);
-    assert.match(hint.text, /1934/);
-    assert.match(hint.text, /did not dig/);
-    assert.match(hint.text, /independence/);
+    assert.match(hint.text, /Next year/);
+    assert.match(hint.text, /no water policy/);
+    const late = suggestNext({ ...quiet(campaignState()), year: 1947 });
+    assert.equal(late.kind, "commit");
+    assert.match(late.text, /1934/);
+    assert.match(late.text, /independence/);
+    const stepped = playHint(campaignState());
+    assert.equal(stepped?.year, 1915);
   });
 
   it("spends the first move on the city pipe, not the northern riverbank", () => {

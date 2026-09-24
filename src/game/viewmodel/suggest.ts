@@ -11,6 +11,7 @@ import {
   claimOf,
   commitPolicy,
   fieldDemand,
+  nextPaper,
   pipeCost,
   policyLines,
   queueAction,
@@ -338,7 +339,11 @@ function fusionSite(board: State, dry: Cell[]): Cell | null {
 export function suggestNext(state: State): Hint {
   if (state.over) return { kind: "wait", id: null, text: `${state.year}. The clock stopped. Sinai is back. The score is the people.` };
   if (pendingBrief(state)) return { kind: "wait", id: null, text: "Read the card. Continue, then ask again." };
-  if (state.year < 1948) return { kind: "commit", id: null, text: "You own the swamp. They approved it in 1934 and did not dig it. Push for independence." };
+  if (state.year < 1948) {
+    return state.year >= 1947
+      ? { kind: "commit", id: null, text: "They approved the swamp in 1934 and never dug it. Push for independence." }
+      : { kind: "commit", id: null, text: "Next year. There is no water policy. The ditch is still not dug." };
+  }
 
   const draft = policyLines(state);
   const board = draft.projected;
@@ -431,7 +436,7 @@ export function playHint(state: State): State | null {
     const brief = pendingBrief(state);
     return brief ? ackBrief(state, brief.id) : null;
   }
-  if (hint.kind === "commit") return commitPolicy(state);
+  if (hint.kind === "commit") return state.year < 1948 ? nextPaper(state) : commitPolicy(state);
   if (hint.id == null) return null;
   const next = queueAction(state, hint.kind, hint.id);
   if (next.policy.length === state.policy.length) return null;

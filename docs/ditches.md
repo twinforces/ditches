@@ -1,6 +1,6 @@
 # Ditches and Desert
 
-What: A hex sim of water, then land, then people. Starts in 1947. The Sinai goes back in 1982. Desalination starts in 2005. The year does not stop.
+What: A hex sim of water, then land, then people. The campaign opens in 1914 as a newspaper. No water policy, and the books do not move. Farmland appears when it is bought. 1947's only button is Push for Independence. The shovel is legal in 1948. The Sinai goes back in 1982. Desalination starts in 2005. The year does not stop.
 
 Why: The coast already feeds a small population. Dirt does not. People arrive only up to what new land can hold.
 
@@ -13,7 +13,7 @@ How:
 - Towns pay a little. Rain-fed land feeds you and pays nothing. A carrier field pays 8. A well field pays 3.
 - The Jordan north of the lake is the Kinneret's water. South of the lake the river is the eastern border and not a tap.
 - Kinneret flow is 12 once the swamp is open. Each Hula hex still in the way holds 1 of that back. Yarkon is 3. Nir Am is 2. Soft desert takes 1. Hard desert takes 2, which a well cannot pay.
-- A card stops the year for the 1947 partition, the 1934 concession, the 1948 invasion, the 1956 Sinai trip, the first raids, 1967, 1973, the 1982 withdrawal, and 2005 desalination. Wars change what you may dig. They do not turn dirt green. Lebanon, Syria, Jordan, and Egypt are labeled and not playable. Gaza is two gray hexes: buildable from 1967, abandoned in 2005.
+- From 1914 through 1947 the bottom of the board is The Palestine Gazette. Next year does not run the economy. 1921 and 1925 put bought farmland on the map. 1934 is Britain approving the Hula sale and not digging it. 1947 is Push for Independence, which opens 1948. A card then stops for the invasion, the 1956 Sinai trip, the first raids, 1967, 1973, the 1982 withdrawal, and 2005 desalination. Wars change what you may dig. They do not turn dirt green. Lebanon, Syria, Jordan, and Egypt are labeled and not playable. Gaza is two gray hexes: buildable from 1967, abandoned in 2005.
 - The books are Israeli lira (IL). The shekel is 1980.
 - Olive orchards sit on the west face of the ridge. They are already land, and not yours.
 - The hint scores each option in people and lira. A pipe toward Beersheba wins when moving water you already have pays more than opening the swamp. Draining Hula wins when that extra flow is worth more than another segment. It is not aimed there by name. A kibbutz is one household and loses both. Kibbutzim still cannot sit on adjacent hexes.

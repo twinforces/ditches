@@ -1,4 +1,5 @@
 import { BOARD, neighbors, type Cell, type Terrain } from "./board.ts";
+import { paperFor } from "./papers.ts";
 
 export type Pipe = { id: number };
 export type Field = { id: number; demand: number; order: number; well?: number };
@@ -72,6 +73,8 @@ export type State = {
   promisedYear: number | null;
   /** Fusion desalination plants on the shore. Each is a tank of 50, from 2050. */
   fusion: number[];
+  /** Dunes bought and put under the plow during the Mandate. Not a ditch. */
+  bought: number[];
 };
 
 const PIPE_COST: Partial<Record<Terrain, number>> = {
@@ -84,7 +87,14 @@ const PIPE_COST: Partial<Record<Terrain, number>> = {
 };
 
 export function terrainOf(s: State, cell: Cell): Terrain {
-  return s.terrain[cell.id] ?? cell.terrain;
+  if (s.terrain[cell.id]) return s.terrain[cell.id];
+  if (s.year < 1921 && jezeelDeed(cell)) return "desert";
+  return cell.terrain;
+}
+
+/** The Sursock valley. On the board it is already farmland. Before 1921 it has not been sold. */
+function jezeelDeed(cell: Cell): boolean {
+  return cell.terrain === "fertile" && cell.claim === "yishuv" && cell.r >= 17 && cell.r <= 19 && cell.c >= 7 && cell.c <= 11;
 }
 
 function conducts(s: State, cell: Cell): boolean {
@@ -185,6 +195,7 @@ function blank(year: number, log: string): State {
     gazaLeft: false,
     promisedYear: null,
     fusion: [],
+    bought: [],
   };
 }
 
@@ -193,9 +204,43 @@ export function initialState(): State {
   return blank(1948, "1948. The Mandate is over. The swamp you bought can be dug. The south is still dirt.");
 }
 
-/** November 1947. The concession was approved in 1934. It was not dug. */
+/** 1914. Beirut holds the swamp. There is no water policy until the Mandate is over. */
 export function campaignState(): State {
-  return blank(1947, "1947. The Hula concession was approved in 1934. They did not dig it.");
+  return blank(1914, "1914. Beirut holds the Hula concession. Nobody is digging.");
+}
+
+const PLOW: Record<number, [number, number][]> = {
+  1921: [
+    [17, 7],
+    [18, 7],
+    [19, 7],
+    [17, 12],
+    [18, 12],
+    [19, 12],
+  ],
+  1925: [
+    [23, 4],
+    [24, 4],
+    [25, 4],
+    [26, 4],
+  ],
+};
+
+/** The paper's button. One year, no economy, no ditch. Farmland appears when it was bought. */
+export function nextPaper(prev: State): State {
+  if (prev.year >= 1948) return prev;
+  const s = structuredClone(prev);
+  if (!s.bought) s.bought = [];
+  s.year += 1;
+  for (const [r, c] of PLOW[s.year] ?? []) {
+    const cell = BOARD.find((x) => x.r === r && x.c === c);
+    if (!cell || (cell.terrain !== "desert" && cell.terrain !== "hard")) continue;
+    s.terrain[cell.id] = "fertile";
+    if (!s.bought.includes(cell.id)) s.bought.push(cell.id);
+  }
+  if (s.year >= 1948) pushLog(s, "1948. The Mandate is over. The shovel is legal. The swamp is still undug.");
+  else pushLog(s, `${s.year}. ${paperFor(s.year).headline}`);
+  return s;
 }
 
 /** Coast holds a town. A city holds more when farmland sits around it. A well holds one household. */
@@ -280,6 +325,9 @@ export function cityPeople(s: State): { name: string; people: number }[] {
 export function claimOf(s: State, cell: Cell): "yishuv" | "arab" | "open" {
   if (cell.terrain === "gaza") return s.year >= 1967 && s.year < 2005 ? "open" : "arab";
   if (s.highlandOpen && cell.terrain === "mountain" && cell.claim === "arab") return "open";
+  if (s.bought?.includes(cell.id)) return "yishuv";
+  if (cell.terrain === "swamp" && cell.claim === "yishuv" && s.year < 1934) return "open";
+  if (s.year < 1921 && jezeelDeed(cell)) return "open";
   return cell.claim;
 }
 
@@ -310,7 +358,7 @@ export function pipeCost(s: State, cell: Cell): number | null {
 
 export function canPipe(s: State, cell: Cell, info = wetInfo(s)): string | null {
   if (s.over) return "The clock has stopped.";
-  if (s.year < 1948) return "Approved in 1934. Left undug. The ditch waits until independence.";
+  if (s.year < 1948) return "No water policy under the Mandate. They approved works and did not dig them.";
   if (s.fusion.includes(cell.id)) return "The plant is the tank. Pipe the next hex.";
   if (cell.terrain === "gaza" && claimOf(s, cell) === "arab") {
     return s.year >= 2005 ? "Gaza was left in 2005. The hex stays gray." : "Egypt holds Gaza. Not yours to ditch.";
@@ -376,9 +424,12 @@ export function canIrrigate(s: State, cell: Cell, info = wetInfo(s)): string | n
 
 export function canDrain(s: State, cell: Cell): string | null {
   if (s.over) return "The clock has stopped.";
-  if (s.year < 1948) return "You own the concession. They approved it in 1934 and did not dig it.";
-  if (claimOf(s, cell) === "arab") return "Reserved in the 1934 sale. Not yours to drain.";
+  if (claimOf(s, cell) === "arab") {
+    return s.year >= 1934 && cell.terrain === "swamp" ? "Reserved in the 1934 sale. Not yours to drain." : "Not yours to drain.";
+  }
   if (terrainOf(s, cell) !== "swamp") return "Not swamp.";
+  if (s.year < 1934) return "Beirut has held this concession since 1914 and has not dug it.";
+  if (s.year < 1948) return "You own the concession. They approved it in 1934 and did not dig it.";
   if (s.cash < DRAIN_CASH) return `Need ${il(DRAIN_CASH)} to drain.`;
   return null;
 }
@@ -1017,7 +1068,9 @@ function holdableDirt(s: State): number {
 }
 
 export function coach(year: number): string {
-  if (year < 1948) return "You own the swamp. They approved it in 1934 and did not dig it. Push for independence, then the shovel.";
+  if (year < 1921) return "Beirut holds the swamp. There is no water policy. Read the paper.";
+  if (year < 1934) return "The valley is farmland now. The swamp is still not yours to dig. Next year.";
+  if (year < 1948) return "They approved the swamp in 1934 and did not dig it. No water policy until they leave.";
   if (year < 1953) return "The pipe that matters runs from the Yarkon south to Beersheba. A kibbutz well waters one hex. It is not that pipe. The books are in lira, not dollars.";
   if (year < 1960) return "A kibbutz well waters one hex and holds a few people. The lake, sent west around the green highlands, holds a country.";
   if (year < 1965) return "Soft desert takes 1 flow. Hard desert takes 2. People come up to what the new land can hold.";

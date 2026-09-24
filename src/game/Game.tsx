@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { CircleHelp, Droplets, Radiation, RotateCcw, Shovel } from "lucide-react";
 import { COLS, ROWS } from "./model/board.ts";
-import { campaignState, commitPolicy, dropPolicyItem, queueAction, undoPolicy, type State } from "./model/sim.ts";
+import { campaignState, commitPolicy, dropPolicyItem, nextPaper, queueAction, undoPolicy, type State } from "./model/sim.ts";
 import { ackBrief } from "./model/events.ts";
 import { ALLOCATED, FILL, present } from "./viewmodel/present.ts";
 import { playHint, suggestNext } from "./viewmodel/suggest.ts";
 import { Shell } from "./Shell";
 
-const SAVE = "ditches-desert-v9";
-const PREVIOUS_SAVE = "ditches-desert-v8";
+const SAVE = "ditches-desert-v10";
 const HEX = 14;
 
 function hexPoints(cx: number, cy: number, size: number): string {
@@ -48,7 +47,7 @@ export function Game() {
   useEffect(() => {
     let next = campaignState();
     try {
-      const raw = localStorage.getItem(SAVE) ?? localStorage.getItem(PREVIOUS_SAVE);
+      const raw = localStorage.getItem(SAVE);
       if (raw) {
         const parsed = JSON.parse(raw) as State;
         if (parsed.over) parsed.over = false;
@@ -57,7 +56,8 @@ export function Game() {
           for (const id of parsed.kibbutzim ?? []) parsed.kibbutzYear[id] = (parsed.year ?? 1948) - 5;
         }
         if (!parsed.fusion) parsed.fusion = [];
-        next = parsed;
+        if (!parsed.bought) parsed.bought = [];
+        if ((parsed.year ?? 1948) >= 1948) next = parsed;
       }
     } catch {
       /* fresh board */
@@ -138,7 +138,7 @@ export function Game() {
       <main className="relative flex min-h-0 flex-1 flex-col">
         <div className="flex shrink-0 flex-wrap items-end justify-between gap-2 border-b border-[var(--color-line)]/15 px-3 py-2">
           <h1 className="text-2xl leading-none">Year {view.year}</h1>
-          <p className="max-w-md text-sm">{view.score}</p>
+          {!view.paper && <p className="max-w-md text-sm">{view.score}</p>}
           <p className="flex flex-wrap gap-x-3 text-xs text-[var(--color-muted)]">
             <span className="inline-flex items-center gap-1"><span className="inline-block size-3 rounded-sm" style={{ background: "#1a56c4" }} /> Bought</span>
             <span className="inline-flex items-center gap-1"><span className="inline-block size-3 rounded-sm" style={{ background: "#178a32" }} /> Not yours</span>
@@ -146,6 +146,9 @@ export function Game() {
             <span className="inline-flex items-center gap-1"><span className="inline-block size-3 rounded-sm bg-cover" style={{ backgroundImage: "url(/tex/fertile.jpg)" }} /> Farmed</span>
             <span className="inline-flex items-center gap-1"><span className="inline-block size-3 rounded-sm" style={{ background: FILL.orchard }} /> Orchard</span>
           </p>
+          {view.paper ? (
+            <p className="text-sm text-[var(--color-muted)]">No water policy. The books do not move.</p>
+          ) : (
           <dl className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
             <Stat k="Treasury" v={`${view.cash} IL`} />
             <Stat k="People" v={view.pop} />
@@ -153,6 +156,7 @@ export function Game() {
             <Stat k="Spare flow" v={view.spare} />
             <Stat k="Policy" v={`${view.policyCash} IL · ${view.apUsed}/${view.apTotal} AP`} />
           </dl>
+          )}
         </div>
         <div className="min-h-0 w-full flex-1 overflow-auto bg-[var(--color-paper)]">
         <svg
@@ -227,7 +231,7 @@ export function Game() {
           })}
         </svg>
       </div>
-      <section className="max-h-[42vh] shrink-0 overflow-auto border-t border-[var(--color-line)]/15 px-3 py-2">
+      <section className={`shrink-0 overflow-auto border-t border-[var(--color-line)]/15 px-3 py-2 ${view.paper ? "max-h-[52vh]" : "max-h-[42vh]"}`}>
         <p className="mb-2 max-w-3xl text-sm text-[var(--color-muted)]">{view.coach}</p>
         <Inspector
           view={view}
@@ -238,6 +242,7 @@ export function Game() {
           onUpgrade={() => selected != null && setState((s) => (s ? queueAction(s, "upgrade", selected) : s))}
           onFusion={() => selected != null && setState((s) => (s ? queueAction(s, "fusion", selected) : s))}
           onClose={() => setState((s) => (s ? commitPolicy(s) : s))}
+          onPaper={() => setState((s) => (s ? nextPaper(s) : s))}
           onDrop={(index) => setState((s) => (s ? dropPolicyItem(s, index) : s))}
           onUndo={() => setState((s) => (s ? undoPolicy(s) : s))}
           playing={auto}
@@ -264,6 +269,7 @@ export function Game() {
             setSelected(null);
           }}
         />
+        {!view.paper && (
         <ol className="mt-2 max-h-8 overflow-hidden text-xs text-[var(--color-muted)]">
           {view.log.map((line, i) => (
             <li key={i} className="truncate">
@@ -271,6 +277,7 @@ export function Game() {
             </li>
           ))}
         </ol>
+        )}
       </section>
       {tip && hover && (
         <div
@@ -318,6 +325,7 @@ function Inspector({
   onIrrigate,
   onDrain,
   onClose,
+  onPaper,
   onReset,
   onDrop,
   onKibbutz,
@@ -335,6 +343,7 @@ function Inspector({
   onUpgrade: () => void;
   onFusion: () => void;
   onClose: () => void;
+  onPaper: () => void;
   onReset: () => void;
   onDrop: (index: number) => void;
   onUndo: () => void;
@@ -350,6 +359,24 @@ function Inspector({
 
   return (
     <div className="flex flex-col gap-2">
+      {view.paper ? (
+        <article className="gazette">
+          <p className="mast">The Palestine Gazette</p>
+          <p className="dateline">Jerusalem, {view.paper.year}</p>
+          <hr className="rule" />
+          <h2>{view.paper.headline}</h2>
+          <p className="deck">{view.paper.deck}</p>
+          <p className="copy">{view.paper.body}</p>
+          <button
+            type="button"
+            onClick={onPaper}
+            className="mt-3 min-h-11 rounded-[var(--radius)] bg-[var(--color-ink)] px-4 font-sans text-sm font-medium text-[var(--color-paper)]"
+          >
+            [ {view.paper.button} ]
+          </button>
+        </article>
+      ) : (
+        <>
       <h2 className="text-lg">{view.title}</h2>
       {view.blurb && <p className="text-sm text-[var(--color-muted)]">{view.blurb}</p>}
       {view.actions.length > 0 && (
@@ -452,13 +479,6 @@ function Inspector({
         </button>
         <button
           type="button"
-          onClick={onReset}
-          className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius)] border border-[var(--color-line)]/20 px-3 text-sm"
-        >
-          <RotateCcw size={16} /> Reset 1947
-        </button>
-        <button
-          type="button"
           disabled={view.policy.length === 0}
           onClick={onUndo}
           className="min-h-11 rounded-[var(--radius)] border border-[var(--color-line)]/20 px-3 text-sm disabled:opacity-40"
@@ -515,6 +535,15 @@ function Inspector({
           </table>
         )}
       </div>
+        </>
+      )}
+      <button
+        type="button"
+        onClick={onReset}
+        className="inline-flex min-h-11 w-fit items-center gap-2 rounded-[var(--radius)] border border-[var(--color-line)]/20 px-3 text-sm"
+      >
+        <RotateCcw size={16} /> Reset 1914
+      </button>
     </div>
   );
 }

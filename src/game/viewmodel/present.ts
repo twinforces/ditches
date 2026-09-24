@@ -1,5 +1,6 @@
 import { BOARD, neighbors, type Cell, type Terrain } from "../model/board.ts";
 import { pendingBrief, type Brief } from "../model/events.ts";
+import { paperFor, type Paper } from "../model/papers.ts";
 import { suggestNext, type Hint } from "./suggest.ts";
 import {
   canDrain,
@@ -108,6 +109,8 @@ export type Presented = {
   hint: Hint;
   /** The suggested action on the hex you are looking at, or commit when that is the only move. */
   best: PresentedAction["id"] | "commit" | null;
+  /** Set before 1948. The paper is the only move. */
+  paper: Paper | null;
 };
 
 export function present(state: State, selectedId: number | null): Presented {
@@ -196,6 +199,7 @@ export function present(state: State, selectedId: number | null): Presented {
     brief: pendingBrief(state),
     hint,
     best,
+    paper: state.year < 1948 ? paperFor(state.year) : null,
   };
 }
 
